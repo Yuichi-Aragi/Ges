@@ -2,9 +2,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- CONFIGURATION ---
     const config = {
         clientId: '909976441907-avv9kfpdhkrutuul0ded4gej2u8dq85l.apps.googleusercontent.com', // This will be replaced by the GitHub Action
-        scope: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.profile',
-        tokenUrl: 'https://oauth2.googleapis.com/token',
-        userInfoUrl: 'https://www.googleapis.com/oauth2/v3/userinfo'
+        scope: 'https://www.googleapis.com/auth/drive',
+        tokenUrl: 'https://oauth2.googleapis.com/token'
     };
 
     // --- UI ELEMENTS ---
@@ -19,17 +18,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // This function is called after the Google Identity Services library is loaded
     window.onload = () => {
         if (config.clientId.includes('__GOOGLE_CLIENT_ID__')) {
-            // Don't initialize if the placeholder is still there
             console.error("Google Client ID has not been replaced. Check your GitHub Action setup.");
+            alert("Configuration error: Client ID not set. Deployment may have failed.");
             return;
         }
 
+        // Initialize the official Google Code Client.
         googleClient = google.accounts.oauth2.initCodeClient({
             client_id: config.clientId,
             scope: config.scope,
+            ux_mode: 'popup',
             callback: (response) => {
-                // This callback is triggered after the user signs in and grants consent.
-                // The 'response.code' is the authorization code we need.
                 if (response.code) {
                     handleAuthCode(response.code);
                 }
@@ -42,8 +41,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- OAUTH LOGIC ---
     loginButton.addEventListener('click', () => {
-        // Trigger the official Google sign-in flow
-        googleClient.requestCode();
+        if (googleClient) {
+            googleClient.requestCode();
+        } else {
+            alert("Google client not initialized. Please wait a moment and try again.");
+        }
     });
 
     logoutButton.addEventListener('click', () => {
@@ -54,7 +56,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     async function handleAuthCode(code) {
-        // We have a code, so show the loading spinner
         loggedOutView.classList.add('hidden');
         loggedInView.classList.add('hidden');
         loadingSpinner.classList.remove('hidden');
@@ -68,8 +69,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem('refresh_token', tokens.refresh_token);
             }
             
-            // Now that we have tokens, update the UI
-            await fetchUserInfo(tokens.access_token);
             updateUI(true, {
                 access_token: tokens.access_token,
                 refresh_token: localStorage.getItem('refresh_token')
@@ -87,7 +86,6 @@ document.addEventListener('DOMContentLoaded', () => {
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: new URLSearchParams({
                 client_id: config.clientId,
-                redirect_uri: window.location.origin + window.location.pathname, // Must match what's in Google Console
                 code: code,
                 grant_type: 'authorization_code'
             })
@@ -123,25 +121,12 @@ document.addEventListener('DOMContentLoaded', () => {
             loggedInView.classList.add('hidden');
         }
     }
-
-    async function fetchUserInfo(accessToken) {
-        const response = await fetch(config.userInfoUrl, {
-            headers: { 'Authorization': `Bearer ${accessToken}` }
-        });
-        if (!response.ok) throw new Error('Failed to fetch user info.');
-        const data = await response.json();
-        document.getElementById('userName').textContent = data.name;
-        document.getElementById('userEmail').textContent = data.email;
-        document.getElementById('userAvatar').src = data.picture;
-    }
     
     // --- INITIALIZATION ---
-    async function init() {
-        // This function runs on page load to see if we're already logged in
+    function init() {
         const accessToken = localStorage.getItem('access_token');
         const expiresAt = localStorage.getItem('token_expires_at');
         if (accessToken && expiresAt && Date.now() < expiresAt) {
-            await fetchUserInfo(accessToken);
             updateUI(true, {
                 access_token: accessToken,
                 refresh_token: localStorage.getItem('refresh_token')
