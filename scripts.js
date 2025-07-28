@@ -2,9 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- CONFIGURATION ---
     const config = {
         clientId: '909976441907-1gfhvgfi8emjj34ta1tpgstu7uqc4ooe.apps.googleusercontent.com', // This will be replaced by the GitHub Action
-        redirectUri: window.location.origin + window.location.pathname,
         scope: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.profile',
-        authUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
         tokenUrl: 'https://oauth2.googleapis.com/token',
         userInfoUrl: 'https://www.googleapis.com/oauth2/v3/userinfo'
     };
@@ -16,53 +14,36 @@ document.addEventListener('DOMContentLoaded', () => {
     const logoutButton = document.getElementById('logoutButton');
     const loadingSpinner = document.getElementById('loadingSpinner');
     
-    // --- PKCE HELPER FUNCTIONS ---
+    let googleClient;
 
-    // =================================================================
-    // THE FIX IS IN THIS FUNCTION
-    // =================================================================
-    async function generateCodeChallenge(codeVerifier) {
-        const data = new TextEncoder().encode(codeVerifier);
-        const digest = await window.crypto.subtle.digest('SHA-256', data);
+    // This function is called after the Google Identity Services library is loaded
+    window.onload = () => {
+        if (config.clientId.includes('__GOOGLE_CLIENT_ID__')) {
+            // Don't initialize if the placeholder is still there
+            console.error("Google Client ID has not been replaced. Check your GitHub Action setup.");
+            return;
+        }
 
-        // NEW, MORE ROBUST METHOD to convert ArrayBuffer to base64url
-        // This avoids potential issues with String.fromCharCode on large arrays
-        let base64 = btoa(String.fromCharCode.apply(null, new Uint8Array(digest)));
-        return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-    }
-    // =================================================================
-    // END OF FIX
-    // =================================================================
-
-    function generateCodeVerifier() {
-        const randomBytes = new Uint8Array(32);
-        window.crypto.getRandomValues(randomBytes);
-        // This is a more robust way to convert random bytes to a base64url string
-        let base64 = btoa(String.fromCharCode.apply(null, randomBytes));
-        return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-    }
-    
-    // --- OAUTH LOGIC ---
-    loginButton.addEventListener('click', async () => {
-        const codeVerifier = generateCodeVerifier();
-        sessionStorage.setItem('code_verifier', codeVerifier);
-        const codeChallenge = await generateCodeChallenge(codeVerifier);
-
-        const params = new URLSearchParams({
+        googleClient = google.accounts.oauth2.initCodeClient({
             client_id: config.clientId,
-            redirect_uri: config.redirectUri,
-            response_type: 'code',
             scope: config.scope,
-            code_challenge: codeChallenge,
-            code_challenge_method: 'S-256',
-            access_type: 'offline', // Necessary to get a refresh token
-            prompt: 'consent' // Ensures the user is prompted for consent, needed for refresh token
+            callback: (response) => {
+                // This callback is triggered after the user signs in and grants consent.
+                // The 'response.code' is the authorization code we need.
+                if (response.code) {
+                    handleAuthCode(response.code);
+                }
+            },
         });
 
-        // For debugging: you can uncomment the next line to see the generated URL
-        // console.log(`${config.authUrl}?${params}`);
+        // Check if we are already logged in from a previous session
+        init();
+    };
 
-        window.location.href = `${config.authUrl}?${params}`;
+    // --- OAUTH LOGIC ---
+    loginButton.addEventListener('click', () => {
+        // Trigger the official Google sign-in flow
+        googleClient.requestCode();
     });
 
     logoutButton.addEventListener('click', () => {
@@ -72,20 +53,42 @@ document.addEventListener('DOMContentLoaded', () => {
         updateUI(false);
     });
 
-    async function exchangeCodeForToken(code) {
-        const codeVerifier = sessionStorage.getItem('code_verifier');
-        if (!codeVerifier) {
-            throw new Error('Code verifier not found.');
-        }
+    async function handleAuthCode(code) {
+        // We have a code, so show the loading spinner
+        loggedOutView.classList.add('hidden');
+        loggedInView.classList.add('hidden');
+        loadingSpinner.classList.remove('hidden');
 
+        try {
+            const tokens = await exchangeCodeForToken(code);
+            const expiresAt = Date.now() + (tokens.expires_in * 1000);
+            localStorage.setItem('access_token', tokens.access_token);
+            localStorage.setItem('token_expires_at', expiresAt);
+            if (tokens.refresh_token) {
+                localStorage.setItem('refresh_token', tokens.refresh_token);
+            }
+            
+            // Now that we have tokens, update the UI
+            await fetchUserInfo(tokens.access_token);
+            updateUI(true, {
+                access_token: tokens.access_token,
+                refresh_token: localStorage.getItem('refresh_token')
+            });
+        } catch (error) {
+            console.error(error);
+            alert(`Error: ${error.message}`);
+            updateUI(false);
+        }
+    }
+
+    async function exchangeCodeForToken(code) {
         const response = await fetch(config.tokenUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: new URLSearchParams({
                 client_id: config.clientId,
-                redirect_uri: config.redirectUri,
+                redirect_uri: window.location.origin + window.location.pathname, // Must match what's in Google Console
                 code: code,
-                code_verifier: codeVerifier,
                 grant_type: 'authorization_code'
             })
         });
@@ -99,10 +102,10 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // --- UI LOGIC ---
     function updateUI(isLoggedIn, tokens = {}) {
+        loadingSpinner.classList.add('hidden');
         if (isLoggedIn) {
             loggedOutView.classList.add('hidden');
             loggedInView.classList.remove('hidden');
-            loadingSpinner.classList.add('hidden');
 
             document.getElementById('accessToken').value = tokens.access_token || 'N/A';
             const refreshTokenTextarea = document.getElementById('refreshToken');
@@ -118,7 +121,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             loggedOutView.classList.remove('hidden');
             loggedInView.classList.add('hidden');
-            loadingSpinner.classList.add('hidden');
         }
     }
 
@@ -135,50 +137,17 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // --- INITIALIZATION ---
     async function init() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const code = urlParams.get('code');
-
-        if (code) {
-            // We have a code, so we are in the redirect phase
-            loggedOutView.classList.add('hidden');
-            loadingSpinner.classList.remove('hidden');
-            
-            try {
-                const tokens = await exchangeCodeForToken(code);
-                const expiresAt = Date.now() + (tokens.expires_in * 1000);
-                localStorage.setItem('access_token', tokens.access_token);
-                localStorage.setItem('token_expires_at', expiresAt);
-                if (tokens.refresh_token) {
-                    localStorage.setItem('refresh_token', tokens.refresh_token);
-                }
-                
-                // Clean the URL
-                window.history.replaceState({}, document.title, window.location.pathname);
-                
-                // Now that we have tokens, update the UI
-                await fetchUserInfo(tokens.access_token);
-                updateUI(true, {
-                    access_token: tokens.access_token,
-                    refresh_token: localStorage.getItem('refresh_token') // Use stored one if available
-                });
-            } catch (error) {
-                console.error(error);
-                alert(`Error: ${error.message}`);
-                updateUI(false);
-            }
+        // This function runs on page load to see if we're already logged in
+        const accessToken = localStorage.getItem('access_token');
+        const expiresAt = localStorage.getItem('token_expires_at');
+        if (accessToken && expiresAt && Date.now() < expiresAt) {
+            await fetchUserInfo(accessToken);
+            updateUI(true, {
+                access_token: accessToken,
+                refresh_token: localStorage.getItem('refresh_token')
+            });
         } else {
-            // Standard page load, check if we are already logged in
-            const accessToken = localStorage.getItem('access_token');
-            const expiresAt = localStorage.getItem('token_expires_at');
-            if (accessToken && expiresAt && Date.now() < expiresAt) {
-                await fetchUserInfo(accessToken);
-                updateUI(true, {
-                    access_token: accessToken,
-                    refresh_token: localStorage.getItem('refresh_token')
-                });
-            } else {
-                updateUI(false);
-            }
+            updateUI(false);
         }
     }
 
@@ -193,6 +162,4 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => { e.target.textContent = 'Copy'; }, 2000);
         });
     });
-
-    init();
 });
