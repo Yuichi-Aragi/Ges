@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- CONFIGURATION ---
     const config = {
-        clientId: '__GOOGLE_CLIENT_ID__', // This will be replaced by the GitHub Action
+        clientId: '909976441907-1gfhvgfi8emjj34ta1tpgstu7uqc4ooe.apps.googleusercontent.com', // This will be replaced by the GitHub Action
         redirectUri: window.location.origin + window.location.pathname,
         scope: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.profile',
         authUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
