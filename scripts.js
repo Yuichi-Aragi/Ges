@@ -17,18 +17,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const loadingSpinner = document.getElementById('loadingSpinner');
     
     // --- PKCE HELPER FUNCTIONS ---
+
+    // =================================================================
+    // THE FIX IS IN THIS FUNCTION
+    // =================================================================
     async function generateCodeChallenge(codeVerifier) {
         const data = new TextEncoder().encode(codeVerifier);
         const digest = await window.crypto.subtle.digest('SHA-256', data);
-        return btoa(String.fromCharCode.apply(null, [...new Uint8Array(digest)]))
-            .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+
+        // NEW, MORE ROBUST METHOD to convert ArrayBuffer to base64url
+        // This avoids potential issues with String.fromCharCode on large arrays
+        let base64 = btoa(String.fromCharCode.apply(null, new Uint8Array(digest)));
+        return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
     }
+    // =================================================================
+    // END OF FIX
+    // =================================================================
 
     function generateCodeVerifier() {
         const randomBytes = new Uint8Array(32);
         window.crypto.getRandomValues(randomBytes);
-        return btoa(String.fromCharCode.apply(null, randomBytes))
-            .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+        // This is a more robust way to convert random bytes to a base64url string
+        let base64 = btoa(String.fromCharCode.apply(null, randomBytes));
+        return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
     }
     
     // --- OAUTH LOGIC ---
@@ -47,6 +58,9 @@ document.addEventListener('DOMContentLoaded', () => {
             access_type: 'offline', // Necessary to get a refresh token
             prompt: 'consent' // Ensures the user is prompted for consent, needed for refresh token
         });
+
+        // For debugging: you can uncomment the next line to see the generated URL
+        // console.log(`${config.authUrl}?${params}`);
 
         window.location.href = `${config.authUrl}?${params}`;
     });
