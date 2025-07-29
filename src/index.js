@@ -38,8 +38,8 @@ export default {
       // Prepare the request body to send to Google.
       // The client_id and client_secret are securely fetched from the worker's environment.
       const body = new URLSearchParams({
-        client_id: env.GOOGLE_CLIENT_ID,
-        client_secret: env.GOOGLE_CLIENT_SECRET,
+        client_id: env.CLIENT_ID,
+        client_secret: env.CLIENT_SECRET,
         code: code,
         grant_type: 'authorization_code',
         redirect_uri: redirect_uri,
