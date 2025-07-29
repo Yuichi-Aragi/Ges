@@ -4,7 +4,7 @@ const config = {
     // IMPORTANT: Replace with your actual Google Cloud Client ID
     clientId: '909976441907-avv9kfpdhkrutuul0ded4gej2u8dq85l.apps.googleusercontent.com', 
     // IMPORTANT: Replace with the URL of your deployed Cloudflare worker
-    workerUrl: 'https://5386efc7-ges.yukag.workers.dev/' 
+    workerUrl: 'https://ges.yukag.workers.dev/' 
 };
 
 document.addEventListener('DOMContentLoaded', () => {
