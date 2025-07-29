@@ -1,77 +1,92 @@
-// This is the entire backend. It's stateless and secure.
+// src/index.js
 
-// Define the CORS headers to allow our GitHub Pages site to call this worker.
+export default {
+  async fetch(request, env) {
+    // Handle CORS preflight requests
+    if (request.method === 'OPTIONS') {
+      return handleOptions(request);
+    }
+
+    const url = new URL(request.url);
+    if (url.pathname === '/auth' && request.method === 'POST') {
+      return handleAuth(request, env);
+    }
+
+    return new Response('Not Found', { status: 404 });
+  },
+};
+
+async function handleAuth(request, env) {
+  try {
+    const { code } = await request.json();
+
+    if (!code) {
+      return new Response(JSON.stringify({ error: 'Authorization code is missing.' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
+
+    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        code: code,
+        client_id: env.CLIENT_ID,
+        client_secret: env.CLIENT_SECRET,
+        redirect_uri: 'postmessage', // Required for this flow
+        grant_type: 'authorization_code',
+      }),
+    });
+
+    const tokenData = await tokenResponse.json();
+
+    if (!tokenResponse.ok) {
+        console.error('Google API Error:', tokenData);
+        return new Response(JSON.stringify({ error: tokenData.error_description || 'Failed to fetch tokens from Google.' }), {
+            status: tokenResponse.status,
+            headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        });
+    }
+
+    return new Response(JSON.stringify(tokenData), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json', ...corsHeaders },
+    });
+
+  } catch (error) {
+    console.error('Worker Error:', error);
+    return new Response(JSON.stringify({ error: 'An internal server error occurred.' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json', ...corsHeaders },
+    });
+  }
+}
+
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*', // For production, you can restrict this to your specific GitHub Pages URL
+  'Access-Control-Allow-Origin': '*', // In production, restrict this to your frontend's domain
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
 };
 
-export default {
-  async fetch(request, env) {
-    // `env` contains our secrets (GOOGLE_CLIENT_SECRET) and vars (GOOGLE_CLIENT_ID)
-
-    // Handle CORS preflight requests required by browsers
-    if (request.method === 'OPTIONS') {
-      return new Response(null, { headers: corsHeaders });
-    }
-
-    if (request.method !== 'POST') {
-      return new Response(JSON.stringify({ error: 'This worker only accepts POST requests.' }), {
-        status: 405,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
-      });
-    }
-
-    try {
-      const { code, redirect_uri } = await request.json();
-
-      if (!code) {
-        return new Response(JSON.stringify({ error: 'Missing authorization code.' }), {
-          status: 400,
-          headers: { 'Content-Type': 'application/json', ...corsHeaders },
-        });
-      }
-
-      const TOKEN_URL = 'https://oauth2.googleapis.com/token';
-
-      // Prepare the request body to send to Google.
-      // The client_id and client_secret are securely fetched from the worker's environment.
-      const body = new URLSearchParams({
-        client_id: env.CLIENT_ID,
-        client_secret: env.CLIENT_SECRET,
-        code: code,
-        grant_type: 'authorization_code',
-        redirect_uri: redirect_uri,
-      });
-
-      const tokenResponse = await fetch(TOKEN_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: body,
-      });
-
-      const tokenData = await tokenResponse.json();
-
-      if (!tokenResponse.ok) {
-        throw new Error(tokenData.error_description || 'Failed to fetch token from Google.');
-      }
-
-      // Success! Return the tokens to the frontend with CORS headers.
-      return new Response(JSON.stringify(tokenData), {
-        headers: {
-          'Content-Type': 'application/json',
-          ...corsHeaders,
-        },
-      });
-
-    } catch (error) {
-      return new Response(JSON.stringify({ error: error.message }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
-      });
-    }
-  },
-};
+function handleOptions(request) {
+  if (
+    request.headers.get('Origin') !== null &&
+    request.headers.get('Access-Control-Request-Method') !== null &&
+    request.headers.get('Access-Control-Request-Headers') !== null
+  ) {
+    // Handle CORS preflight requests.
+    return new Response(null, {
+      headers: corsHeaders,
+    });
+  } else {
+    // Handle standard OPTIONS request.
+    return new Response(null, {
+      headers: {
+        Allow: 'POST, OPTIONS',
+      },
+    });
+  }
+}
