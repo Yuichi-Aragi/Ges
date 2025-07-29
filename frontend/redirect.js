@@ -1,7 +1,7 @@
 // frontend/redirect.js
 
 // IMPORTANT: Replace with the URL of your deployed Cloudflare worker
-const workerUrl = 'https://ges.yukag.workers.dev/'; 
+const workerUrl = 'https://ges.yukag.workers.dev'; 
 
 window.onload = async () => {
     const urlParams = new URLSearchParams(window.location.search);
