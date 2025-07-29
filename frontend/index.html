@@ -4,62 +4,116 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Google Authentication Hub</title>
-    <link rel="stylesheet" href="style.css">
+    
+    <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-</head>
-<body>
-    <!-- This script loads the official Google Identity Services (GIS) library -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide-static@latest/dist/lucide.min.js"></script>
+
+    <!-- App Scripts -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script>
+        // Basic Tailwind configuration
+        tailwind.config = {
+            darkMode: 'media', // or 'class'
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Simple style to prevent flash of unstyled content (FOUC) */
+        body { visibility: hidden; }
+        body.loaded { visibility: visible; }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 font-sans antialiased">
 
-    <div class="container">
-        <!-- Logged Out View -->
-        <div id="loggedOutView">
-            <header>
-                <h1>Google Authentication Hub</h1>
-                <p>Securely obtain API tokens for your applications.</p>
-            </header>
-            <main>
-                <button id="loginButton" class="button-primary">
-                    <svg aria-hidden="true" height="20" viewBox="0 0 24 24" width="20"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"></path><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"></path><path d="M1 1h22v22H1z" fill="none"></path></svg>
-                    <span>Sign In with Google</span>
-                </button>
-            </main>
-        </div>
+    <div class="flex min-h-screen w-full items-center justify-center p-4">
+        <div class="relative w-full max-w-md overflow-hidden rounded-2xl bg-white dark:bg-slate-800/50 dark:backdrop-blur-sm dark:border dark:border-slate-700 shadow-2xl shadow-slate-900/10">
+            
+            <!-- Logged Out View -->
+            <div id="loggedOutView" class="p-8 sm:p-10">
+                <header class="text-center">
+                    <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                        Authentication Hub
+                    </h1>
+                    <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                        Securely obtain Google API tokens for your applications.
+                    </p>
+                </header>
+                <main class="mt-8">
+                    <button id="loginButton" class="group inline-flex w-full items-center justify-center gap-3 rounded-lg bg-slate-900 px-4 py-3 font-semibold text-white transition-colors hover:bg-slate-700 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2 dark:focus-visible:ring-slate-400 dark:ring-offset-slate-900">
+                        <svg aria-hidden="true" height="20" viewBox="0 0 24 24" width="20"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"></path><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"></path><path d="M1 1h22v22H1z" fill="none"></path></svg>
+                        <span>Sign In with Google</span>
+                    </button>
+                </main>
+            </div>
 
-        <!-- Logged In View -->
-        <div id="loggedInView" class="hidden">
-            <header class="user-header">
-                <h2>Authentication Successful</h2>
-                <button id="logoutButton" class="button-secondary">Logout</button>
-            </header>
-            <main>
-                <div class="token-container">
-                    <h3>Access Token</h3>
-                    <p>A short-lived token (1 hour) to access the API directly.</p>
-                    <div class="token-box">
-                        <textarea id="accessToken" readonly></textarea>
-                        <button class="copy-button" data-target="accessToken">Copy</button>
+            <!-- Logged In View -->
+            <div id="loggedInView" class="hidden p-8 sm:p-10">
+                <header class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <!-- Placeholder for user image -->
+                        <div class="h-12 w-12 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
+                            <i data-lucide="user" class="h-6 w-6 text-slate-500 dark:text-slate-400"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-base font-semibold text-slate-900 dark:text-white">Authentication Successful</h2>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">Your tokens are ready.</p>
+                        </div>
                     </div>
-                </div>
-                <div class="token-container">
-                    <h3>Refresh Token</h3>
-                    <p>A long-lived token used to get new access tokens. Store this securely. It is only provided on the first login/consent.</p>
-                    <div class="token-box">
-                        <textarea id="refreshToken" readonly></textarea>
-                        <button class="copy-button" data-target="refreshToken">Copy</button>
+                    <button id="logoutButton" title="Logout" class="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200">
+                        <i data-lucide="log-out" class="h-5 w-5"></i>
+                    </button>
+                </header>
+                <main class="mt-8 space-y-6">
+                    <div class="token-container">
+                        <label for="accessToken" class="text-sm font-medium text-slate-700 dark:text-slate-300">Access Token</label>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-2">Short-lived token (1 hour) to access the API.</p>
+                        <div class="token-box relative">
+                            <textarea id="accessToken" readonly class="w-full h-24 resize-none rounded-lg border border-slate-200 bg-slate-50 p-3 pr-12 font-mono text-sm text-slate-700 focus:border-blue-500 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-300 dark:placeholder-slate-400"></textarea>
+                            <button class="copy-button absolute right-2 top-2 rounded-md p-2 text-slate-500 transition-colors hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-600" data-target="accessToken" title="Copy to clipboard">
+                                <i data-lucide="copy" class="copy-icon h-4 w-4"></i>
+                                <i data-lucide="check" class="check-icon h-4 w-4 hidden text-green-500"></i>
+                            </button>
+                        </div>
                     </div>
-                    <p id="refreshTokenWarning" class="warning-text hidden">Not provided on this login. To get a new one, you must <a href="https://myaccount.google.com/permissions" target="_blank">revoke app access</a> and sign in again.</p>
-                </div>
-            </main>
-        </div>
+                    <div class="token-container">
+                        <label for="refreshToken" class="text-sm font-medium text-slate-700 dark:text-slate-300">Refresh Token</label>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-2">Long-lived token to get new access tokens. Store securely.</p>
+                        <div class="token-box relative">
+                            <textarea id="refreshToken" readonly class="w-full h-24 resize-none rounded-lg border border-slate-200 bg-slate-50 p-3 pr-12 font-mono text-sm text-slate-700 focus:border-blue-500 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-300 dark:placeholder-slate-400"></textarea>
+                             <button class="copy-button absolute right-2 top-2 rounded-md p-2 text-slate-500 transition-colors hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-600" data-target="refreshToken" title="Copy to clipboard">
+                                <i data-lucide="copy" class="copy-icon h-4 w-4"></i>
+                                <i data-lucide="check" class="check-icon h-4 w-4 hidden text-green-500"></i>
+                            </button>
+                        </div>
+                        <div id="refreshTokenWarning" class="hidden mt-3 flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-300">
+                            <i data-lucide="alert-triangle" class="h-4 w-4 flex-shrink-0 mt-0.5"></i>
+                            <p>Not provided on this login. To get a new one, you must <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer" class="font-semibold underline hover:text-amber-700 dark:hover:text-amber-200">revoke app access</a> and sign in again.</p>
+                        </div>
+                    </div>
+                </main>
+            </div>
 
-        <!-- Loading Spinner -->
-        <div id="loadingSpinner" class="hidden">
-            <div class="spinner"></div>
+            <!-- Loading Spinner -->
+            <div id="loadingSpinner" class="hidden absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
+                <i data-lucide="loader-2" class="h-8 w-8 animate-spin text-slate-500 dark:text-slate-400"></i>
+            </div>
         </div>
     </div>
+    
     <script src="script.js"></script>
 </body>
 </html>
