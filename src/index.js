@@ -2,7 +2,6 @@
 
 export default {
   async fetch(request, env) {
-    // Handle CORS preflight requests
     if (request.method === 'OPTIONS') {
       return handleOptions(request);
     }
@@ -36,7 +35,9 @@ async function handleAuth(request, env) {
         code: code,
         client_id: env.CLIENT_ID,
         client_secret: env.CLIENT_SECRET,
-        redirect_uri: 'postmessage', // Required for this flow
+        // CORRECTED: This URI must be authorized in your Google Cloud Console
+        // and must match what the Google Identity Services library uses.
+        redirect_uri: 'https://accounts.google.com/gsi/client',
         grant_type: 'authorization_code',
       }),
     });
@@ -66,7 +67,7 @@ async function handleAuth(request, env) {
 }
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*', // In production, restrict this to your frontend's domain
+  'Access-Control-Allow-Origin': 'https://yuichi-aragi.github.io', // Best practice: Restrict to your frontend's domain
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
 };
@@ -77,16 +78,8 @@ function handleOptions(request) {
     request.headers.get('Access-Control-Request-Method') !== null &&
     request.headers.get('Access-Control-Request-Headers') !== null
   ) {
-    // Handle CORS preflight requests.
-    return new Response(null, {
-      headers: corsHeaders,
-    });
+    return new Response(null, { headers: corsHeaders });
   } else {
-    // Handle standard OPTIONS request.
-    return new Response(null, {
-      headers: {
-        Allow: 'POST, OPTIONS',
-      },
-    });
+    return new Response(null, { headers: { Allow: 'POST, OPTIONS' } });
   }
 }
