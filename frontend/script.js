@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // This is public and safe to have in the code.
         clientId: '909976441907-avv9kfpdhkrutuul0ded4gej2u8dq85l.apps.googleusercontent.com', // PASTE YOUR PUBLIC CLIENT ID
         // The URL of the worker you will deploy.
-        workerUrl: 'https://google-auth-proxy.yukag.workers.dev', // PASTE YOUR WORKER URL
+        workerUrl: 'https://5386efc7-ges.yukag.workers.dev/', // PASTE YOUR WORKER URL
         redirectUri: window.location.origin + window.location.pathname,
         scope: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.profile',
         authUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
