@@ -1,10 +1,16 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- CONFIGURATION ---
     const config = {
-        clientId: '909976441907-avv9kfpdhkrutuul0ded4gej2u8dq85l.apps.googleusercontent.com', // This will be replaced by the GitHub Action
-        scope: 'https://www.googleapis.com/auth/drive',
-        tokenUrl: 'https://oauth2.googleapis.com/token'
+        // This is public and safe to have in the code.
+        clientId: '909976441907-avv9kfpdhkrutuul0ded4gej2u8dq85l.apps.googleusercontent.com', // PASTE YOUR PUBLIC CLIENT ID
+        // The URL of the worker you will deploy.
+        workerUrl: 'https://google-auth-proxy.yukag.workers.dev', // PASTE YOUR WORKER URL
+        redirectUri: window.location.origin + window.location.pathname,
+        scope: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.profile',
+        authUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
+        userInfoUrl: 'https://www.googleapis.com/oauth2/v3/userinfo'
     };
+
 
     // --- UI ELEMENTS ---
     const loggedOutView = document.getElementById('loggedOutView');
