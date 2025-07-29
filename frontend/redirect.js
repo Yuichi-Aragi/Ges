@@ -1,6 +1,17 @@
+// This script is deferred, so lucide is guaranteed to be available.
+// We call this first to render the initial spinner icon on the page.
+try {
+    lucide.createIcons();
+} catch (e) {
+    console.error("Failed to render initial icons on redirect page.", e);
+}
+
+
 const workerUrl = 'https://ges.yukag.workers.dev'.trim();
 
-window.onload = async () => {
+// Use an immediately-invoked async function to handle the logic.
+// This runs after the script is loaded and parsed, thanks to 'defer'.
+(async () => {
     try {
         const urlParams = new URLSearchParams(window.location.search);
         const code = urlParams.get('code')?.trim() || null;
@@ -77,7 +88,8 @@ window.onload = async () => {
         );
         console.error('OAuth redirect initialization failed:', initError);
     }
-};
+})();
+
 
 function escapeHtml(unsafe) {
     return unsafe
