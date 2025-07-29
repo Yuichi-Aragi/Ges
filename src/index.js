@@ -28,8 +28,8 @@ async function handleAuth(request, env) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         code: code,
-        client_id: env.GOOGLE_CLIENT_ID,
-        client_secret: env.GOOGLE_CLIENT_SECRET,
+        client_id: env.CLIENT_ID,
+        client_secret: env.CLIENT_SECRET,
         // CORRECTED: This must match the URI in your Google Console and script.js
         redirect_uri: 'https://yuichi-aragi.github.io/Ges/redirect.html',
         grant_type: 'authorization_code',
