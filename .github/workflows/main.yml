@@ -22,23 +22,47 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: '18'
 
       - name: Install Wrangler
-        run: npm install -g wrangler
+        run: npm install --save-dev wrangler
 
+      # ====================================================================
+      # DEBUGGING STEP: This will prove if the secrets are accessible
+      # ====================================================================
+      - name: Verify Secrets are Loaded
+        env:
+          # Explicitly map the secrets to environment variables for this step
+          CF_API_TOKEN_SET: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
+          CF_ACCOUNT_ID_SET: ${{ secrets.CLOUDFLARE_ACCOUNT_ID != '' }}
+        run: |
+          echo "Cloudflare API Token is set: $CF_API_TOKEN_SET"
+          echo "Cloudflare Account ID is set: $CF_ACCOUNT_ID_SET"
+          if [ "$CF_API_TOKEN_SET" != "true" ]; then
+            echo "::error::CLOUDFLARE_API_TOKEN secret is not set or empty in GitHub Secrets."
+            exit 1
+          fi
+
+      # ====================================================================
+      # DEPLOYMENT STEP: This is the corrected deployment logic
+      # ====================================================================
       - name: Deploy Cloudflare Worker
+        # This 'env' block makes the secrets available as environment variables
+        # ONLY for the duration of this specific step. This is secure.
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          # Use the wrangler secret put command to securely upload secrets.
-          # The --env production flag can be used if you have different environments.
-          echo "${{ secrets.GOOGLE_CLIENT_SECRET }}" | wrangler secret put GOOGLE_CLIENT_SECRET
-          echo "${{ secrets.GOOGLE_CLIENT_ID }}" | wrangler secret put GOOGLE_CLIENT_ID
+          # The 'npx' command ensures we use the version of Wrangler from package.json
+          # Wrangler will automatically pick up the CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID env vars.
           
-          # Deploy the worker. Wrangler reads the wrangler.toml file.
-          wrangler deploy
+          # Use wrangler secret put to securely upload secrets to the worker.
+          # The 'echo' command pipes the secret value directly to the command.
+          echo "${{ secrets.GOOGLE_CLIENT_ID }}" | npx wrangler secret put GOOGLE_CLIENT_ID
+          echo "${{ secrets.GOOGLE_CLIENT_SECRET }}" | npx wrangler secret put GOOGLE_CLIENT_SECRET
+          
+          # Deploy the worker. Wrangler reads the wrangler.toml file for configuration.
+          npx wrangler deploy
 
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v4
