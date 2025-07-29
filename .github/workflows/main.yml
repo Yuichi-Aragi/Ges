@@ -1,0 +1,53 @@
+name: Deploy Worker and Pages
+
+on:
+  push:
+    branches:
+      - "main" # Trigger on push to the main branch
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+      pages: write
+      id-token: write
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Install Wrangler
+        run: npm install -g wrangler
+
+      - name: Deploy Cloudflare Worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          # Use the wrangler secret put command to securely upload secrets.
+          # The --env production flag can be used if you have different environments.
+          echo "${{ secrets.GOOGLE_CLIENT_SECRET }}" | wrangler secret put GOOGLE_CLIENT_SECRET
+          echo "${{ secrets.GOOGLE_CLIENT_ID }}" | wrangler secret put GOOGLE_CLIENT_ID
+          
+          # Deploy the worker. Wrangler reads the wrangler.toml file.
+          wrangler deploy
+
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload frontend artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./frontend
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
