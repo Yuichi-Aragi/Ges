@@ -5,12 +5,10 @@ export default {
     if (request.method === 'OPTIONS') {
       return handleOptions(request);
     }
-
     const url = new URL(request.url);
     if (url.pathname === '/auth' && request.method === 'POST') {
       return handleAuth(request, env);
     }
-
     return new Response('Not Found', { status: 404 });
   },
 };
@@ -18,7 +16,6 @@ export default {
 async function handleAuth(request, env) {
   try {
     const { code } = await request.json();
-
     if (!code) {
       return new Response(JSON.stringify({ error: 'Authorization code is missing.' }), {
         status: 400,
@@ -28,35 +25,30 @@ async function handleAuth(request, env) {
 
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         code: code,
-        client_id: env.CLIENT_ID,
-        client_secret: env.CLIENT_SECRET,
-        // CORRECTED: This URI must be authorized in your Google Cloud Console
-        // and must match what the Google Identity Services library uses.
-        redirect_uri: 'https://accounts.google.com/gsi/client',
+        client_id: env.GOOGLE_CLIENT_ID,
+        client_secret: env.GOOGLE_CLIENT_SECRET,
+        // CORRECTED: This must match the URI in your Google Console and script.js
+        redirect_uri: 'https://yuichi-aragi.github.io/Ges/redirect.html',
         grant_type: 'authorization_code',
       }),
     });
 
     const tokenData = await tokenResponse.json();
-
     if (!tokenResponse.ok) {
-        console.error('Google API Error:', tokenData);
-        return new Response(JSON.stringify({ error: tokenData.error_description || 'Failed to fetch tokens from Google.' }), {
-            status: tokenResponse.status,
-            headers: { 'Content-Type': 'application/json', ...corsHeaders },
-        });
+      console.error('Google API Error:', tokenData);
+      return new Response(JSON.stringify({ error: tokenData.error_description || 'Failed to fetch tokens from Google.' }), {
+        status: tokenResponse.status,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
     }
 
     return new Response(JSON.stringify(tokenData), {
       status: 200,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
     });
-
   } catch (error) {
     console.error('Worker Error:', error);
     return new Response(JSON.stringify({ error: 'An internal server error occurred.' }), {
@@ -67,7 +59,7 @@ async function handleAuth(request, env) {
 }
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://yuichi-aragi.github.io', // Best practice: Restrict to your frontend's domain
+  'Access-Control-Allow-Origin': 'https://yuichi-aragi.github.io',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
 };
