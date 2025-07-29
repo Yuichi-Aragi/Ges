@@ -19,9 +19,12 @@ try {
     const refreshTokenWarning = document.getElementById('refreshTokenWarning');
     const copyButtons = document.querySelectorAll('.copy-button');
 
+    // **CORRECTION:** Reverted to a graceful return instead of throwing a critical error.
+    // This makes the script more robust and prevents it from crashing if run on a
+    // page without these specific elements.
     if (!loginButton || !logoutButton || !loggedOutView || !loggedInView) {
-        console.warn('OAuth UI: Critical elements missing, exiting initialization');
-        throw new Error('Critical UI elements are missing from the page.');
+        console.warn('OAuth UI: Critical elements missing, exiting initialization.');
+        return; 
     }
 
     const TokenStorage = {
@@ -115,7 +118,6 @@ try {
                     }, 2000);
                 }).catch(err => {
                     console.error('Failed to copy text: ', err);
-                    // Optional: Add visual feedback for error
                 });
             });
         });
