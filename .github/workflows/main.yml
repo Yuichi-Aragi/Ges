@@ -3,8 +3,8 @@ name: Deploy Worker and Pages
 on:
   push:
     branches:
-      - "main" # Trigger on push to the main branch
-  workflow_dispatch: # Allow manual triggering
+      - "main"
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -28,40 +28,38 @@ jobs:
         run: npm install --save-dev wrangler
 
       # ====================================================================
-      # DEBUGGING STEP: This will prove if the secrets are accessible
+      # UPDATED DEBUGGING STEP: Checks the NEW secret names
       # ====================================================================
       - name: Verify Secrets are Loaded
         env:
-          # Explicitly map the secrets to environment variables for this step
-          CF_API_TOKEN_SET: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
-          CF_ACCOUNT_ID_SET: ${{ secrets.CLOUDFLARE_ACCOUNT_ID != '' }}
+          API_TOKEN_SET: ${{ secrets.CF_API_TOKEN != '' }}
+          ACCOUNT_ID_SET: ${{ secrets.CF_ACCOUNT_ID != '' }}
         run: |
-          echo "Cloudflare API Token is set: $CF_API_TOKEN_SET"
-          echo "Cloudflare Account ID is set: $CF_ACCOUNT_ID_SET"
-          if [ "$CF_API_TOKEN_SET" != "true" ]; then
-            echo "::error::CLOUDFLARE_API_TOKEN secret is not set or empty in GitHub Secrets."
+          echo "Cloudflare API Token (CF_API_TOKEN) is set: $API_TOKEN_SET"
+          echo "Cloudflare Account ID (CF_ACCOUNT_ID) is set: $ACCOUNT_ID_SET"
+          if [ "$API_TOKEN_SET" != "true" ]; then
+            echo "::error::CF_API_TOKEN secret is not set or empty in GitHub Secrets. Please check the name."
+            exit 1
+          fi
+          if [ "$ACCOUNT_ID_SET" != "true" ]; then
+            echo "::error::CF_ACCOUNT_ID secret is not set or empty in GitHub Secrets. Please check the name."
             exit 1
           fi
 
       # ====================================================================
-      # DEPLOYMENT STEP: This is the corrected deployment logic
+      # UPDATED DEPLOYMENT STEP: Uses the NEW secret names
       # ====================================================================
       - name: Deploy Cloudflare Worker
-        # This 'env' block makes the secrets available as environment variables
-        # ONLY for the duration of this specific step. This is secure.
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          # Map the new secret names to the environment variables that Wrangler expects
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
         run: |
-          # The 'npx' command ensures we use the version of Wrangler from package.json
-          # Wrangler will automatically pick up the CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID env vars.
-          
-          # Use wrangler secret put to securely upload secrets to the worker.
-          # The 'echo' command pipes the secret value directly to the command.
+          # Use npx to ensure we use the locally installed wrangler
           echo "${{ secrets.GOOGLE_CLIENT_ID }}" | npx wrangler secret put GOOGLE_CLIENT_ID
           echo "${{ secrets.GOOGLE_CLIENT_SECRET }}" | npx wrangler secret put GOOGLE_CLIENT_SECRET
           
-          # Deploy the worker. Wrangler reads the wrangler.toml file for configuration.
+          # Deploy the worker. Wrangler will automatically use the CLOUDFLARE_... env vars.
           npx wrangler deploy
 
       - name: Setup GitHub Pages
