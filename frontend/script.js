@@ -4,7 +4,7 @@ const config = {
     // IMPORTANT: Replace with your actual Google Cloud Client ID
     clientId: '909976441907-avv9kfpdhkrutuul0ded4gej2u8dq85l.apps.googleusercontent.com',
     // The exact redirect URI you authorized in the Google Cloud Console
-    redirectUri: 'https://ges.yukag.workers.dev/',
+    redirectUri: 'https://yuichi-aragi.github.io/Ges/redirect.html',
     // The scopes your application needs
     scope: 'https://www.googleapis.com/auth/drive.readonly'
 };
