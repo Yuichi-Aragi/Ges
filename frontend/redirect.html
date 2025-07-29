@@ -1,50 +1,19 @@
+<!-- frontend/redirect.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Authenticating...</title>
-
-    <!-- Google Fonts: Inter -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide-static@latest/dist/lucide.min.js" defer></script>
-
-    <script>
-        tailwind.config = {
-            darkMode: 'media',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    },
-                }
-            }
-        }
-    </script>
+    <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-slate-50 dark:bg-slate-900 font-sans antialiased">
-    
-    <div class="flex min-h-screen w-full items-center justify-center p-4">
-        <div class="w-full max-w-md rounded-2xl bg-white p-8 text-center dark:bg-slate-800/50 dark:backdrop-blur-sm dark:border dark:border-slate-700 shadow-2xl shadow-slate-900/10">
-            <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-                Authenticating
-            </h1>
-            <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                Please wait while we securely sign you in...
-            </p>
-            <div id="loadingSpinner" class="mt-8 flex justify-center">
-                <i data-lucide="loader-2" class="h-8 w-8 animate-spin text-slate-500 dark:text-slate-400"></i>
-            </div>
+<body>
+    <div class="container">
+        <h1>Authenticating</h1>
+        <p>Please wait while we securely sign you in...</p>
+        <div id="loadingSpinner">
+            <div class="spinner"></div>
         </div>
     </div>
-
-    <script src="redirect.js" defer></script>
+    <script src="redirect.js"></script>
 </body>
 </html>
