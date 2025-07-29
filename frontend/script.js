@@ -87,21 +87,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function exchangeCodeForToken(code) {
-        const response = await fetch(config.tokenUrl, {
+        const response = await fetch(config.workerUrl, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({
-                client_id: config.clientId,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
                 code: code,
-                grant_type: 'authorization_code'
-            })
+                redirect_uri: config.redirectUri
+            }),
         });
 
+        const data = await response.json();
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error_description || 'Failed to exchange code for token.');
+            throw new Error(data.error || 'Failed to exchange code via worker.');
         }
-        return await response.json();
+        return data;
     }
     
     // --- UI LOGIC ---
