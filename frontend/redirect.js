@@ -1,8 +1,3 @@
-// frontend/redirect.js
-// Improved: robust fetch with timeout & simple retry/backoff, better error handling,
-// validates state against sessionStorage (anti-CSRF, optional), preserves backwards compatibility
-// with original worker POST contract: { code }
-
 (() => {
     'use strict';
 
@@ -18,19 +13,34 @@
         return new URLSearchParams(window.location.search || window.location.hash.replace('#', '?'));
     }
 
+    /**
+     * Displays an error message to the user by safely creating and appending DOM elements.
+     * This avoids the need for manual HTML escaping and prevents XSS vulnerabilities.
+     * @param {string} title - The title of the error.
+     * @param {string} message - The detailed error message.
+     */
     function showErrorHtml(title, message) {
-        document.body.innerHTML = `<div class="container"><h1>${escapeHtml(title)}</h1><p>${escapeHtml(message)}</p></div>`;
+        // Clear any existing content from the body
+        document.body.innerHTML = '';
+
+        // Create elements programmatically to avoid innerHTML-based XSS
+        const container = document.createElement('div');
+        // Assuming a .container class exists for styling, based on the original code
+        container.className = 'container';
+
+        const h1 = document.createElement('h1');
+        h1.textContent = title; // Safely sets the text content, no HTML parsing
+
+        const p = document.createElement('p');
+        p.textContent = message; // Safely sets the text content
+
+        // Assemble the final structure
+        container.appendChild(h1);
+        container.appendChild(p);
+        document.body.appendChild(container);
     }
 
-    function escapeHtml(s) {
-        if (!s && s !== '') return '';
-        return String(s)
-            .replaceAll('&', '&amp;')
-            .replaceAll('<', '&lt;')
-            .replaceAll('>', '&gt;')
-            .replaceAll('"', '&quot;')
-            .replaceAll("'", '&#39;');
-    }
+    // The escapeHtml function has been removed as it is no longer needed.
 
     async function fetchWithTimeoutAndRetries(url, options = {}, timeoutMs = FETCH_TIMEOUT_MS, retries = MAX_RETRIES) {
         let attempt = 0;
