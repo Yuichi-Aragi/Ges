@@ -1,7 +1,4 @@
 // frontend/script.js
-// Improved: more robust, faster-failing fetch (timeout), better clipboard handling,
-// safer JSON parsing, state handling for CSRF protection, better UX for token display.
-// Backward-compatible: keeps same DOM IDs and localStorage key ('googleAuthTokens').
 
 const config = {
     // IMPORTANT: Replace with your actual Google Cloud Client ID
@@ -10,10 +7,6 @@ const config = {
     redirectUri: 'https://yuichi-aragi.github.io/Ges/redirect.html',
     // The scopes your application needs
     scope: 'https://www.googleapis.com/auth/drive.readonly',
-    // Optional: include granted scopes to allow incremental auth. Backwards-compatible.
-    includeGrantedScopes: true,
-    // Optional: show 'prompt' behavior. 'consent' ensures refresh token but will force consent every time.
-    prompt: 'consent',
     // Local storage key used by the redirect handler too (keep unchanged for compatibility)
     storageKey: 'googleAuthTokens',
     // How long to show "Copied!" state (ms)
