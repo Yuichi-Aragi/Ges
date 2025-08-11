@@ -203,8 +203,8 @@ const config = {
                     clientId: config.clientId,
                     redirectUri: config.redirectUri,
                     scope: config.scope,
-                    includeGrantedScopes: config.includeGrantedScopes,
-                    prompt: config.prompt,
+            //        includeGrantedScopes: config.includeGrantedScopes,
+         //           prompt: config.prompt,
                     state
                 });
 
