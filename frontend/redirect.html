@@ -1,19 +1,27 @@
-<!-- frontend/redirect.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
     <title>Authenticating...</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
+    <noscript>
+        <div class="noscript-warning">JavaScript is required for authentication to complete.</div>
+    </noscript>
+
+    <div class="container" aria-live="assertive">
         <h1>Authenticating</h1>
         <p>Please wait while we securely sign you in...</p>
-        <div id="loadingSpinner">
+        <div id="loadingSpinner" role="status">
             <div class="spinner"></div>
+            <span class="visually-hidden">Processing authentication…</span>
         </div>
     </div>
-    <script src="redirect.js"></script>
+
+    <script src="redirect.js" defer></script>
 </body>
 </html>
